@@ -1,5 +1,6 @@
 #include "svacstreamdecoder.h"
 #include <QDebug>
+#include <QApplication>
 #include "ESDecoder.h"
 #include "PSDecoder.h"
 #include "config.h"
@@ -7,7 +8,7 @@
 #include <QCoreApplication>
 
 SVACStreamDecoder::SVACStreamDecoder(MainWindow* window, QObject *parent)
-    : QObject(parent)
+    : QObject(nullptr)
     , mainWindow(window)
     , isRunning(false)
     , isPaused(false)
@@ -17,7 +18,6 @@ SVACStreamDecoder::SVACStreamDecoder(MainWindow* window, QObject *parent)
     // 将解密器移动到工作线程
     this->moveToThread(&workerThread);
     
-
     // 启动工作线程
     workerThread.start();
 }
@@ -147,6 +147,8 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
         frameHeight = frame.height;
         mainWindow->setVideoSize(frameWidth, frameHeight);
         
+        qDebug() << "Current thread ID:" << QThread::currentThreadId() 
+                 << "Main thread ID:" << QApplication::instance()->thread()->currentThreadId();
         // 确保在主线程中处理
         QMetaObject::invokeMethod(mainWindow, [this, frame]() {
             // 更新YUV数据
@@ -160,6 +162,8 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
             );
         }, Qt::QueuedConnection);
     });
+
+    QThread::msleep(40);
 
     return true;
 }

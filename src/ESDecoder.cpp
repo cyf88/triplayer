@@ -75,9 +75,7 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
                 frame.timestamp = 0; // 如果有时间戳信息，可以在这里填充
                 _frameNum++;
                 bufferSPS = 0;
-                
-                // 使用 QThread::msleep 代替 std::this_thread::sleep_for
-                QThread::msleep(80);
+                            
                 
                 if (_onOriginFrame) {
                     _onOriginFrame(frame);
