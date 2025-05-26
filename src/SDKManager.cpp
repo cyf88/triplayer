@@ -97,11 +97,12 @@ DownloadChannel::~DownloadChannel() {
 
 SDKManager::SDKManager() {
 
-#ifdef FM_SKF
-    TRI_SUT_Init((char*)"12345678");
-#else
-    TRI_SUT_Init((char*)"111111");
-#endif
+
+	std::string ukeyPin = ConfigReader::Instance().getValue("Player", "ukey_pin");
+	LOG(INFO) << "ukeyPin: " << ukeyPin;
+	if (!TRI_SUT_Init((char*)ukeyPin.c_str())) {
+		LOG(INFO) << "TRI_SUT_Init fail with pin:" << ukeyPin;
+	}
 
 	std::string serverId = ConfigReader::Instance().getValue("SIP_CONFIG", "server_id");
 	std::string serverIp = ConfigReader::Instance().getValue("SIP_CONFIG", "server_ip");
@@ -141,19 +142,19 @@ Channel::Ptr SDKManager::createChannel(std::string deviceId, ChannelType type) {
 			return nullptr;
 		}
 		//debug  此处为了测试拿到实时点播的vkek
-        ret = TRI_SUT_GetRealStreamSecDecode(&decodeHandle, (char*)deviceId.c_str());
-        if (ret != 0) {
-            TRI_SUT_Close(decodeHandle);
-            LOG(ERROR) << "create DecryptChannel ret: " << ret;
-            //return nullptr;
-        }
-
-        // ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
+        // ret = TRI_SUT_GetRealStreamSecDecode(&decodeHandle, (char*)deviceId.c_str());
         // if (ret != 0) {
         //     TRI_SUT_Close(decodeHandle);
         //     LOG(ERROR) << "create DecryptChannel ret: " << ret;
         //     //return nullptr;
         // }
+
+        ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
+        if (ret != 0) {
+            TRI_SUT_Close(decodeHandle);
+            LOG(ERROR) << "create DecryptChannel ret: " << ret;
+            //return nullptr;
+        }
 		auto channel = std::make_shared<DecryptionChannel>(decodeHandle, deviceId);
 		return channel;
 	}
