@@ -86,7 +86,7 @@ void SVACStreamDecoder::decryptLoop()
     }
 
     try {
-        qDebug() << "Starting decryption loop in thread:" << QThread::currentThread();
+        qDebug() << "Starting decryption loop in thread:" << QThread::currentThreadId();
         
         // 检查线程状态
         if (!QThread::currentThread() || !workerThread.isRunning()) {
@@ -147,8 +147,8 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
         frameHeight = frame.height;
         mainWindow->setVideoSize(frameWidth, frameHeight);
         
-        qDebug() << "Current thread ID:" << QThread::currentThreadId() 
-                 << "Main thread ID:" << QApplication::instance()->thread()->currentThreadId();
+        // qDebug() << "Current thread ID:" << QThread::currentThreadId() 
+        //          << "Main thread ID:" << QApplication::instance()->thread()->currentThreadId();
         // 确保在主线程中处理
         QMetaObject::invokeMethod(mainWindow, [this, frame]() {
             // 更新YUV数据

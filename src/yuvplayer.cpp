@@ -109,28 +109,17 @@ void YUVPlayer::resizeGL(int w, int h)
 
 void YUVPlayer::paintGL()
 {
-    // static QTime lastPaintTime;
-    // static int frameCount = 0;
-    
-    // QTime currentTime = QTime::currentTime();
-    // if (lastPaintTime.isValid()) {
-    //     int elapsed = lastPaintTime.msecsTo(currentTime);
-    //     frameCount++;
-    //     if (frameCount % 30 == 0) {  // 每30帧输出一次
-    //         qDebug() << "paintGL 调用间隔:" << elapsed << "ms, FPS:" << (1000.0 / elapsed);
-    //     }
-    // }
-    // lastPaintTime = currentTime;
+
     
     if (!frameAvailable) {
         qDebug() << "No frame available for rendering";
         return;
     }
     
-    qDebug() << "开始渲染 - 尺寸:" << frameWidth << "x" << frameHeight
-             << "Y缓冲大小:" << yBuffer.size()
-             << "U缓冲大小:" << uBuffer.size()
-             << "V缓冲大小:" << vBuffer.size();
+    // qDebug() << "开始渲染 - 尺寸:" << frameWidth << "x" << frameHeight
+    //          << "Y缓冲大小:" << yBuffer.size()
+    //          << "U缓冲大小:" << uBuffer.size()
+    //          << "V缓冲大小:" << vBuffer.size();
     
     // 清除颜色缓冲
     glClear(GL_COLOR_BUFFER_BIT);
@@ -186,7 +175,7 @@ void YUVPlayer::paintGL()
         qDebug() << "OpenGL错误:" << err;
     }
     
-    qDebug() << "渲染完成";
+   // qDebug() << "渲染完成";
 }
 
 void YUVPlayer::setFrameSize(int width, int height)
@@ -204,8 +193,9 @@ void YUVPlayer::updateYUVFrame(const uchar* yData, const uchar* uData, const uch
         return;
     }
 
-    qDebug() << "更新YUV帧 - 尺寸:" << frameWidth << "x" << frameHeight 
-             << "Y大小:" << ySize << "U大小:" << uSize << "V大小:" << vSize;
+
+    // qDebug() << "更新YUV帧 - 尺寸:" << frameWidth << "x" << frameHeight 
+    //          << "Y大小:" << ySize << "U大小:" << uSize << "V大小:" << vSize;
 
     // 检查数据大小是否正确
     if (ySize != frameWidth * frameHeight ||

@@ -68,6 +68,7 @@ void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const u
         return;
     }
     // 创建保存YUV数据的文件
+    /*
     static int frameCount = 0;
     QString basePath = "E:/yuv_frames/";
     QDir dir(basePath);
@@ -100,8 +101,8 @@ void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const u
     }
 
     frameCount++;
-
-    qDebug() << "MainWindow::receiveYUVFrame called with sizes:" << ySize << uSize << vSize;
+*/
+  //  qDebug() << "MainWindow::receiveYUVFrame called with sizes:" << ySize << uSize << vSize;
     yuvPlayer->updateYUVFrame(yData, uData, vData, ySize, uSize, vSize);
 }
 
@@ -116,7 +117,7 @@ void MainWindow::onPlayButtonClicked()
         if (currentFile.isEmpty()) {
             // 如果没有打开文件，先打开文件
             QString fileName = QFileDialog::getOpenFileName(this,
-                "打开SVAC文件", "", "SVAC文件 (*.svac);;所有文件 (*.*)");
+                "打开SVAC文件", "", "SVAC文件 (*.ps *.es);;所有文件 (*.*)");
 
             if (fileName.isEmpty()) {
                 return;  // 用户取消选择
@@ -141,7 +142,7 @@ void MainWindow::onPause()
     if (isPlaying) {
         isPlaying = false;
         emit pauseDecryption();
-        
+           
         playButton->setText("继续播放");
         playButton->setEnabled(true);
         pauseButton->setEnabled(false);
