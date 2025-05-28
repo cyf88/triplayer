@@ -34,6 +34,16 @@ public:
         _onOriginFrame = onFrame;
     }
 
+    // 设置停止标志
+    virtual void setStop(bool stop) final {
+        _bStop = stop;
+    }
+
+    // 获取停止标志
+    virtual bool getStop() const final {
+        return _bStop;
+    }
+
 
 protected:
 

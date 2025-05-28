@@ -9,7 +9,7 @@
 #include "StreamDecoder.h"
 
 
-#define PSBUFLEN (2 * 1024 * 1024)
+#define PSBUFLEN (1 * 1024 * 1024)
 #define PS_PES_AUDIO					(0x000001C0)
 #define PS_PES_VIDEO					(0x000001E0)
 
