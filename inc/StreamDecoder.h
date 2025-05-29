@@ -34,6 +34,16 @@ public:
         _onOriginFrame = onFrame;
     }
 
+    // 设置暂停标志
+    virtual void setPause(bool pause) final {
+        _bPause = pause;
+    }
+
+    // 获取暂停标志
+    virtual bool getPause() const final {
+        return _bPause;
+    }
+
     // 设置停止标志
     virtual void setStop(bool stop) final {
         _bStop = stop;
@@ -61,6 +71,8 @@ protected:
 
     volatile bool _bStop = false;
 
+    volatile bool _bPause = false;
+    
     SVACDecoder::Ptr _svacDecoder;
 
     Channel::Ptr _decryptChannel;

@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QMetaObject>
 #include <QDebug>
+#include <QMutex>
 #include "StreamDecoder.h"
 
 // 前向声明
@@ -45,12 +46,13 @@ private:
 private:
     MainWindow* mainWindow;
     QString currentFile;
-    bool isRunning;
+    
+    std::atomic<bool> isRunning;
     bool isPaused;
     
     // 解密线程
     QThread workerThread;
-    
+
     // 视频参数
     int frameWidth;
     int frameHeight;

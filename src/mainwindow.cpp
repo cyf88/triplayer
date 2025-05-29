@@ -45,11 +45,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(stopButton, &QPushButton::clicked, this, &MainWindow::onStop);
 
     // 连接解密器相关的信号和槽
-    connect(this, &MainWindow::fileSelected, decoder, &SVACStreamDecoder::onFileSelected);
-    connect(this, &MainWindow::startDecryption, decoder, &SVACStreamDecoder::onStartDecryption);
-    connect(this, &MainWindow::pauseDecryption, decoder, &SVACStreamDecoder::onPauseDecryption);
-    connect(this, &MainWindow::stopDecryption, decoder, &SVACStreamDecoder::onStopDecryption);
+    // connect(this, &MainWindow::fileSelected, decoder, &SVACStreamDecoder::onFileSelected);
+    // connect(this, &MainWindow::startDecryption, decoder, &SVACStreamDecoder::onStartDecryption);
+    // connect(this, &MainWindow::pauseDecryption, decoder, &SVACStreamDecoder::onPauseDecryption);
+    // connect(this, &MainWindow::stopDecryption, decoder, &SVACStreamDecoder::onStopDecryption);
 
+    connect(this, &MainWindow::fileSelected, decoder, &SVACStreamDecoder::onFileSelected, Qt::QueuedConnection);
+    connect(this, &MainWindow::startDecryption, decoder, &SVACStreamDecoder::onStartDecryption, Qt::DirectConnection);
+    connect(this, &MainWindow::pauseDecryption, decoder, &SVACStreamDecoder::onPauseDecryption, Qt::DirectConnection);
+    connect(this, &MainWindow::stopDecryption, decoder, &SVACStreamDecoder::onStopDecryption, Qt::DirectConnection);
     // 初始化按钮状态
     pauseButton->setEnabled(false);
     stopButton->setEnabled(false);
@@ -160,4 +164,4 @@ void MainWindow::onStop()
     playButton->setEnabled(true);
     pauseButton->setEnabled(false);
     stopButton->setEnabled(false);
-} 
+}

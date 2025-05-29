@@ -17,7 +17,7 @@ SVACStreamDecoder::SVACStreamDecoder(MainWindow* window, QObject *parent)
 {
     // 将解密器移动到工作线程
     this->moveToThread(&workerThread);
-    
+
     // 启动工作线程
     workerThread.start();
 }
@@ -26,7 +26,7 @@ SVACStreamDecoder::~SVACStreamDecoder()
 {
     // 停止解密
     onStopDecryption();
-    
+
     // 停止并等待工作线程结束
     if (workerThread.isRunning()) {
         workerThread.quit();
@@ -35,7 +35,7 @@ SVACStreamDecoder::~SVACStreamDecoder()
             workerThread.wait(); // 等待线程完全终止
         }
     }
-    
+
     // 清理资源
     cleanupDecoder();
 }
@@ -43,10 +43,10 @@ SVACStreamDecoder::~SVACStreamDecoder()
 void SVACStreamDecoder::onFileSelected(const QString& filePath)
 {
     // 停止当前解密
-    onStopDecryption();
-    
+    //onStopDecryption();
+
     currentFile = filePath;
-    
+
     // TODO: 初始化解密器
     if (!initDecoder(filePath)) {
         qDebug() << "初始化解密器失败";
@@ -56,23 +56,29 @@ void SVACStreamDecoder::onFileSelected(const QString& filePath)
 
 void SVACStreamDecoder::onStartDecryption()
 {
+    qDebug() << "Current thread ID in onStartDecryption:" << QThread::currentThreadId();
     if (!isRunning) {
         isRunning = true;
-        isPaused = false;
+        isPaused = false;    
         // 使用 QMetaObject::invokeMethod 确保在工作线程中执行
         QMetaObject::invokeMethod(this, &SVACStreamDecoder::decryptLoop, Qt::QueuedConnection);
     } else if (isPaused) {
         isPaused = false;
+        decoder->setPause(false);
     }
 }
 
 void SVACStreamDecoder::onPauseDecryption()
 {
+
+    decoder->setPause(true);
     isPaused = true;
 }
 
 void SVACStreamDecoder::onStopDecryption()
 {
+
+    decoder->setStop(true);
     isRunning = false;
     isPaused = false;
 }
@@ -87,7 +93,7 @@ void SVACStreamDecoder::decryptLoop()
 
     try {
         qDebug() << "Starting decryption loop in thread:" << QThread::currentThreadId();
-        
+
         // 检查线程状态
         if (!QThread::currentThread() || !workerThread.isRunning()) {
             qDebug() << "Thread is not running properly";
@@ -97,18 +103,18 @@ void SVACStreamDecoder::decryptLoop()
 
         // parse 函数内部已经在循环解析帧，这里直接调用即可
         decoder->parse();
-        
+
         qDebug() << "Decryption loop finished normally";
     } catch (const std::exception& e) {
         qDebug() << "Error in decryptLoop:" << e.what();
     } catch (...) {
         qDebug() << "Unknown error in decryptLoop";
     }
-    
+
     // 当 parse 返回时，说明解析结束或出错
     isRunning = false;
     cleanupDecoder();
-    
+
     // 发送信号通知主线程解密已完成
     emit decryptionFinished();
 }
@@ -129,25 +135,25 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     std::string streamId = ConfigReader::Instance().getValue("Player", "stream_id");
 
     if (suf == "es") {
-		decoder = std::make_shared<ESDecoder>(filePath.toStdString(), streamId);
-	}
-	else if (suf == "ps") {
-		decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
-	}
-	else {
-		return false;
-	}
+        decoder = std::make_shared<ESDecoder>(filePath.toStdString(), streamId);
+    }
+    else if (suf == "ps") {
+        decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
+    }
+    else {
+        return false;
+    }
 
     // 设置帧回调
     decoder->setOnFrame([this](const Frame& frame) {
         if (!mainWindow) return;
-        
+
         // 设置视频尺寸
         frameWidth = frame.width;
         frameHeight = frame.height;
         mainWindow->setVideoSize(frameWidth, frameHeight);
-        
-        // qDebug() << "Current thread ID:" << QThread::currentThreadId() 
+
+        // qDebug() << "Current thread ID:" << QThread::currentThreadId()
         //          << "Main thread ID:" << QApplication::instance()->thread()->currentThreadId();
         // 确保在主线程中处理
         QMetaObject::invokeMethod(mainWindow, [this, frame]() {
@@ -170,9 +176,13 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
 
 void SVACStreamDecoder::cleanupDecoder()
 {
+
     qDebug() << "Cleaning up decoder.";
+    if (decoder) {
+        decoder.reset();
+    }
     // 清理缓冲区
     yBuffer.clear();
     uBuffer.clear();
     vBuffer.clear();
-} 
+}

@@ -37,6 +37,10 @@ void PSDecoder::parse() {
 
 		while (!_bStop)
 		{
+			if (_bPause) {
+				Sleep(100);
+				continue;
+			}
 			int iRvCurren = ResearchPSTag(buf + buflen, readlen - buflen);			//查找第一个PS头的位置
 			if (iRvCurren >= 0)
 			{
