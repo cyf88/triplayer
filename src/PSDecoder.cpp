@@ -1,6 +1,6 @@
 #include"PSDecoder.h"
 #include "easylogging++.h"
-
+#include <QString>
 
 PSDecoder::~PSDecoder() {
 	if (m_psbuf != NULL) {
@@ -18,7 +18,11 @@ void PSDecoder::parse() {
 	int buflen = 0;
 	unsigned char* buf = m_pPSbuf;
 
-	fin = fopen(_filePath.c_str(), "rb");
+    QString qstr = QString::fromUtf8(_filePath);
+
+    //fin = fopen(strPath.c_str(), "rb");
+    // fopen 不支持中文路径
+    fin = _wfopen(reinterpret_cast<const wchar_t*>(qstr.utf16()), L"rb");
 	if (fin == 0) {
 		LOG(DEBUG) << "Cann't open input file " << _filePath;
 		return ;
@@ -38,7 +42,7 @@ void PSDecoder::parse() {
 		while (!_bStop)
 		{
 			if (_bPause) {
-				Sleep(100);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				continue;
 			}
 			int iRvCurren = ResearchPSTag(buf + buflen, readlen - buflen);			//查找第一个PS头的位置
@@ -248,10 +252,10 @@ void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size) {
 		if (_onFrame) {
 			//解密34020000001319000111
 			//std::string chid = "13102800001310434532";
-			std::string chid = "13100000001310010001";
+			//std::string chid = "13100000001310010001";
 			//chid = "46020300001321901221";
 			if (!_decryptChannel) {
-				_decryptChannel = SDKManager::Instance().createChannel(chid, ChannelType::DecryptChannel);
+				_decryptChannel = SDKManager::Instance().createChannel(_streamId, ChannelType::DecryptChannel);
 				if (!_decryptChannel) return;
 			}
 			Frame decFrame;

@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QPainter>
 
 class YUVPlayer : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -20,6 +21,9 @@ public:
     // 接收新的YUV帧数据
     void updateYUVFrame(const uchar* yData, const uchar* uData, const uchar* vData,
                        int ySize, int uSize, int vSize);
+
+    // 设置要显示的文本
+    void setDisplayText(const QString& line1, const QString& line2 = QString());
 
 protected:
     void initializeGL() override;
@@ -43,6 +47,11 @@ private:
     QByteArray vBuffer;
     
     bool frameAvailable;
+
+    // 文本显示相关
+    QString displayTextLine1;
+    QString displayTextLine2;
+    QFont textFont;
 };
 
 #endif // YUVPLAYER_H 

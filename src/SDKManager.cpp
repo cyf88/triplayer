@@ -149,12 +149,12 @@ Channel::Ptr SDKManager::createChannel(std::string deviceId, ChannelType type) {
         //     //return nullptr;
         // }
 
-        ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
-        if (ret != 0) {
-            TRI_SUT_Close(decodeHandle);
-            LOG(ERROR) << "create DecryptChannel ret: " << ret;
-            //return nullptr;
-        }
+        // ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
+        // if (ret != 0) {
+        //     TRI_SUT_Close(decodeHandle);
+        //     LOG(ERROR) << "create DecryptChannel ret: " << ret;
+        //     //return nullptr;
+        // }
 		auto channel = std::make_shared<DecryptionChannel>(decodeHandle, deviceId);
 		return channel;
 	}
@@ -196,5 +196,15 @@ Channel::Ptr SDKManager::createChannel(std::string deviceId, ChannelType type) {
 
 void SDKManager::releaseChannel(Channel::Ptr &channel) {
 	TRI_SUT_Close(channel->getChannelId());
+}
+
+
+int SDKManager::queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCount) {
+    TRI_RET ret = TRI_SUT_QueryVideoPlayRightInfo((char*)"test.ps", buffer, bufferSize, &spandays, &spanCount);
+	if (ret != 0) {
+		LOG(ERROR) << "TRI_SUT_QueryVideoPlayRightInfo fail";
+		return ret;
+	}
+	return 0;
 }
 

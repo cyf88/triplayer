@@ -61,7 +61,7 @@ set(PROJECT_HEADERS
 )
 
 # 添加可执行文件
-add_executable(triplayer
+add_executable(triplayer WIN32
     ${PROJECT_SOURCES}
     ${PROJECT_HEADERS}
 )

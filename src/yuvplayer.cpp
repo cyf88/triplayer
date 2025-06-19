@@ -2,6 +2,8 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include <QTimer>
+#include <QPainter>
+#include <QPainterPath>
 
 // 顶点着色器
 const char *vertexShaderSource =
@@ -43,6 +45,11 @@ YUVPlayer::YUVPlayer(QWidget *parent)
     
     // 设置最小尺寸
     setMinimumSize(320, 240);
+
+    // 初始化文本字体
+    textFont.setFamily("Microsoft YaHei");
+    textFont.setPointSize(12);
+    textFont.setBold(true);
 }
 
 YUVPlayer::~YUVPlayer()
@@ -109,17 +116,10 @@ void YUVPlayer::resizeGL(int w, int h)
 
 void YUVPlayer::paintGL()
 {
-
-    
     if (!frameAvailable) {
         qDebug() << "No frame available for rendering";
         return;
     }
-    
-    // qDebug() << "开始渲染 - 尺寸:" << frameWidth << "x" << frameHeight
-    //          << "Y缓冲大小:" << yBuffer.size()
-    //          << "U缓冲大小:" << uBuffer.size()
-    //          << "V缓冲大小:" << vBuffer.size();
     
     // 清除颜色缓冲
     glClear(GL_COLOR_BUFFER_BIT);
@@ -174,8 +174,47 @@ void YUVPlayer::paintGL()
     while ((err = glGetError()) != GL_NO_ERROR) {
         qDebug() << "OpenGL错误:" << err;
     }
+
+    // 使用QPainter绘制文本
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setFont(textFont);
     
-   // qDebug() << "渲染完成";
+    // 设置文本颜色和背景
+    QPen pen(Qt::white);
+    pen.setWidth(2);
+    painter.setPen(pen);
+    
+    // 计算文本位置
+    int lineHeight = painter.fontMetrics().height();
+    int bottomMargin = 10;
+    int leftMargin = 10;
+    
+    // 绘制第一行文本
+    if (!displayTextLine1.isEmpty()) {
+        // 绘制阴影
+        QPainterPath path1;
+        path1.addText(leftMargin + 2, height() - bottomMargin - lineHeight + 2, textFont, displayTextLine1);
+        painter.setPen(QPen(Qt::black, 3));
+        painter.drawPath(path1);
+        
+        // 绘制文本
+        painter.setPen(pen);
+        painter.drawText(leftMargin, height() - bottomMargin - lineHeight, displayTextLine1);
+    }
+    
+    // 绘制第二行文本
+    if (!displayTextLine2.isEmpty()) {
+        // 绘制阴影
+        QPainterPath path2;
+        path2.addText(leftMargin + 2, height() - bottomMargin + 2, textFont, displayTextLine2);
+        painter.setPen(QPen(Qt::black, 3));
+        painter.drawPath(path2);
+        
+        // 绘制文本
+        painter.setPen(pen);
+        painter.drawText(leftMargin, height() - bottomMargin, displayTextLine2);
+    }
 }
 
 void YUVPlayer::setFrameSize(int width, int height)
@@ -218,4 +257,11 @@ void YUVPlayer::updateYUVFrame(const uchar* yData, const uchar* uData, const uch
     // 直接调用 update
     //update();
     repaint();
+}
+
+void YUVPlayer::setDisplayText(const QString& line1, const QString& line2)
+{
+    displayTextLine1 = line1;
+    displayTextLine2 = line2;
+    update(); // 触发重绘
 } 

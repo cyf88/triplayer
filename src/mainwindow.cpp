@@ -108,6 +108,8 @@ void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const u
 */
   //  qDebug() << "MainWindow::receiveYUVFrame called with sizes:" << ySize << uSize << vSize;
     yuvPlayer->updateYUVFrame(yData, uData, vData, ySize, uSize, vSize);
+    //OSD测试
+    //yuvPlayer->setDisplayText(NULL, QString("YUV数据接收成功"));
 }
 
 void MainWindow::setVideoSize(int width, int height)
@@ -121,7 +123,7 @@ void MainWindow::onPlayButtonClicked()
         if (currentFile.isEmpty()) {
             // 如果没有打开文件，先打开文件
             QString fileName = QFileDialog::getOpenFileName(this,
-                "打开SVAC文件", "", "SVAC文件 (*.ps *.es);;所有文件 (*.*)");
+                "打开SVAC文件", "", "SVAC文件 (*.ps *.mp4 *.es);;所有文件 (*.*)");
 
             if (fileName.isEmpty()) {
                 return;  // 用户取消选择

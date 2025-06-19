@@ -22,10 +22,13 @@ void ESDecoder::parse() {
     }
 
     std::vector<uint8_t> buffer(_bufferSize);
-    size_t startPos = 0;
     size_t fileSize = getFileSize(file);
 
-    while (file.tellg() < fileSize) {
+    while (file.tellg() < fileSize ) {
+        // if (_bPause) {
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //     continue;
+        // }
         // 读取一个块
         file.read(reinterpret_cast<char*>(buffer.data()), _bufferSize);
         size_t bytesRead = file.gcount();
@@ -34,10 +37,12 @@ void ESDecoder::parse() {
         }
 
         // 处理当前读取的块
-        parseBlock(buffer, bytesRead, startPos);
+        size_t lastPos;
+        parseBlock(buffer, bytesRead, lastPos);
 
         // 更新起始位置
-        startPos = file.tellg();
+        file.seekg(lastPos - _bufferSize, std::ios::cur);
+
     }
 }
 
@@ -119,7 +124,7 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
         // 更新当前NAL单元的起始位置      
         bufferPos = endPos + 1;
     }
-
+    startPos = bufferPos - 5;
 }
 
 size_t ESDecoder::findNALStartCode(const std::vector<uint8_t>& buffer, size_t startPos, size_t bufferEnd) {

@@ -137,12 +137,33 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     if (suf == "es") {
         decoder = std::make_shared<ESDecoder>(filePath.toStdString(), streamId);
     }
-    else if (suf == "ps") {
+    else if (suf == "ps" || suf == "mp4") {
         decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
     }
     else {
         return false;
     }
+    // 读取文件前1000字节
+    // std::ifstream file(filePath.toStdString(), std::ios::binary);
+    // if (!file.is_open()) {
+    //     qDebug() << "Failed to open file for reading first 1000 bytes";
+    //     return false;
+    // }
+    
+    // char* buff = new char[1000];
+    // file.read(buff, 1000);
+    // size_t bytesRead = file.gcount();
+    // qDebug() << "Read first" << bytesRead << "bytes from file";
+    // unsigned int spandays = 0;
+    // unsigned int spanCount = 0;
+    // if(SDKManager::Instance().queryPlayRightInfo((unsigned char*)buff, bytesRead, spandays, spanCount) ==0) {
+    //     qDebug() << "spandays:" << spandays << "spanCount:" << spanCount;
+    // }
+
+    
+    // // 使用完后释放内存
+    // delete[] buff;
+    // file.close();
 
     // 设置帧回调
     decoder->setOnFrame([this](const Frame& frame) {

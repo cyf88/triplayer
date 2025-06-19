@@ -73,6 +73,8 @@ public:
 	Channel::Ptr createChannel(std::string deviceId, ChannelType type);
 
 	void releaseChannel(Channel::Ptr &channel);
+
+    int queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCount);
 		
 private:	
 	SDKManager();
