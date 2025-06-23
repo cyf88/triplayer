@@ -29,7 +29,7 @@ private:
   //  std::string _filePath;
 
     // 缓存区大小
-    size_t _bufferSize = 1024*1024*20;
+    size_t _bufferSize = 1024*1024;
 
     // 回调函数
     //OnFrame _onFrame;

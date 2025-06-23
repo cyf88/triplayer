@@ -25,11 +25,11 @@ void ESDecoder::parse() {
     size_t fileSize = getFileSize(file);
 
     while (file.tellg() < fileSize ) {
-        // if (_bPause) {
-        //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        //     continue;
-        // }
-        // 读取一个块
+        if (_bPause) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+        //读取一个块
         file.read(reinterpret_cast<char*>(buffer.data()), _bufferSize);
         size_t bytesRead = file.gcount();
         if (bytesRead == 0) {

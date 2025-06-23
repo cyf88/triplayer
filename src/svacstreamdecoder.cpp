@@ -78,7 +78,9 @@ void SVACStreamDecoder::onPauseDecryption()
 void SVACStreamDecoder::onStopDecryption()
 {
 
-    decoder->setStop(true);
+    if (decoder) {
+        decoder->setStop(true);
+    }
     isRunning = false;
     isPaused = false;
 }
@@ -166,6 +168,7 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     // file.close();
 
     // 设置帧回调
+
     decoder->setOnFrame([this](const Frame& frame) {
         if (!mainWindow) return;
 
