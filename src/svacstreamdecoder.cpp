@@ -145,27 +145,11 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     else {
         return false;
     }
-    // 读取文件前1000字节
-    // std::ifstream file(filePath.toStdString(), std::ios::binary);
-    // if (!file.is_open()) {
-    //     qDebug() << "Failed to open file for reading first 1000 bytes";
-    //     return false;
-    // }
-    
-    // char* buff = new char[1000];
-    // file.read(buff, 1000);
-    // size_t bytesRead = file.gcount();
-    // qDebug() << "Read first" << bytesRead << "bytes from file";
-    // unsigned int spandays = 0;
-    // unsigned int spanCount = 0;
-    // if(SDKManager::Instance().queryPlayRightInfo((unsigned char*)buff, bytesRead, spandays, spanCount) ==0) {
-    //     qDebug() << "spandays:" << spandays << "spanCount:" << spanCount;
-    // }
 
-    
-    // // 使用完后释放内存
-    // delete[] buff;
-    // file.close();
+   // unsigned int spandays = 0;
+    //unsigned int spanCount = 0;
+    decoder->getPlayRightInfo((unsigned int &)spanDays, (unsigned int &)spanCounts);
+
 
     // 设置帧回调
 
@@ -188,7 +172,10 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
                 frame.data.data() + frame.size * 5/6, // V数据
                 frame.size * 2/3,                     // Y大小
                 frame.size / 6,                       // U大小
-                frame.size / 6                        // V大小
+                frame.size / 6,                     // V大小
+                spanDays,
+                spanCounts
+
             );
         }, Qt::QueuedConnection);
     });

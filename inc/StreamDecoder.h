@@ -4,6 +4,8 @@
 
 #include "SVACDecoder.h"
 #include "SDKManager.h"
+#include "easylogging++.h"
+#include <fstream>
 
 
 class StreamDecoder {
@@ -52,6 +54,28 @@ public:
     // 获取停止标志
     virtual bool getStop() const final {
         return _bStop;
+    }
+
+    // 获取播放权限
+    virtual bool getPlayRightInfo(unsigned int& spandays, unsigned int& spanCount) const final {
+       // 读取文件前1000字节
+        std::ifstream file(_filePath, std::ios::binary);
+        if (!file.is_open()) {
+            LOG(INFO) << "Failed to open file for reading first 1000 bytes";
+            return false;
+        }
+
+        char buff [1000];
+        file.read(buff, 1000);
+        size_t bytesRead = file.gcount();
+        file.close();
+        LOG(INFO) << "Read first" << bytesRead << "bytes from file";
+        if(SDKManager::Instance().queryPlayRightInfo((unsigned char*)buff, bytesRead, spandays, spanCount) ==0) {
+            LOG(INFO) << "spandays:" << spandays << "spanCount:" << spanCount;
+            return true;
+        }
+        return false;
+
     }
 
 

@@ -62,6 +62,9 @@ private:
     QByteArray uBuffer;
     QByteArray vBuffer;
 
+    int spanDays;
+    int spanCounts;
+
     std::shared_ptr<StreamDecoder> decoder;
     
     // TODO: 添加SVAC解密所需的其他成员变量

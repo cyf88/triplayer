@@ -22,7 +22,7 @@ public:
 public slots:
     // 提供接口用于接收YUV数据
     void receiveYUVFrame(const uchar* yData, const uchar* uData, const uchar* vData,
-                        int ySize, int uSize, int vSize);
+                        int ySize, int uSize, int vSize, int days, int counts);
 
 signals:
     // 用于通知外部解密类的信号

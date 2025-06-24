@@ -64,7 +64,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const uchar* vData,
-                                int ySize, int uSize, int vSize)
+                                int ySize, int uSize, int vSize, int days, int counts)
 {
     // 检查数据有效性
     if (!yData || !uData || !vData || ySize <= 0 || uSize <= 0 || vSize <= 0) {
@@ -109,7 +109,7 @@ void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const u
   //  qDebug() << "MainWindow::receiveYUVFrame called with sizes:" << ySize << uSize << vSize;
     yuvPlayer->updateYUVFrame(yData, uData, vData, ySize, uSize, vSize);
     //OSD测试
-    //yuvPlayer->setDisplayText(NULL, QString("YUV数据接收成功"));
+    yuvPlayer->setDisplayText(NULL,  QString("剩余天数:%1 剩余次数:%2").arg(days).arg(counts));
 }
 
 void MainWindow::setVideoSize(int width, int height)
