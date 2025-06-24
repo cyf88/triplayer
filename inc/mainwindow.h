@@ -24,6 +24,8 @@ public slots:
     void receiveYUVFrame(const uchar* yData, const uchar* uData, const uchar* vData,
                         int ySize, int uSize, int vSize, int days, int counts);
 
+    void setDecryptionFinished();
+
 signals:
     // 用于通知外部解密类的信号
     void startDecryption();
@@ -35,6 +37,7 @@ private slots:
     void onPlayButtonClicked();
     void onPause();
     void onStop();
+    void onExportButtonClicked();
 
 private:
     YUVPlayer *yuvPlayer;
@@ -45,6 +48,7 @@ private:
     QPushButton *playButton;
     QPushButton *pauseButton;
     QPushButton *stopButton;
+    QPushButton *exportButton;
 
     bool isPlaying;
     QString currentFile;

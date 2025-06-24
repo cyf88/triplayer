@@ -2,6 +2,10 @@
 #include <QMessageBox>
 #include "svacstreamdecoder.h"
 #include <QDebug>
+#include "exportdialog.h"
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,11 +30,14 @@ MainWindow::MainWindow(QWidget *parent)
     playButton = new QPushButton("打开文件", this);
     pauseButton = new QPushButton("暂停", this);
     stopButton = new QPushButton("停止", this);
+    exportButton = new QPushButton("导出", this);
+
 
     // 添加按钮到水平布局
     buttonLayout->addWidget(playButton);
     buttonLayout->addWidget(pauseButton);
     buttonLayout->addWidget(stopButton);
+    buttonLayout->addWidget(exportButton);
 
     // 添加组件到主布局
     mainLayout->addWidget(yuvPlayer);
@@ -54,6 +61,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::startDecryption, decoder, &SVACStreamDecoder::onStartDecryption, Qt::DirectConnection);
     connect(this, &MainWindow::pauseDecryption, decoder, &SVACStreamDecoder::onPauseDecryption, Qt::DirectConnection);
     connect(this, &MainWindow::stopDecryption, decoder, &SVACStreamDecoder::onStopDecryption, Qt::DirectConnection);
+    
+    //接受解密结束的通知
+    connect(decoder, &SVACStreamDecoder::decryptionFinished, this, &MainWindow::setDecryptionFinished);
+    
     // 初始化按钮状态
     pauseButton->setEnabled(false);
     stopButton->setEnabled(false);
@@ -109,7 +120,24 @@ void MainWindow::receiveYUVFrame(const uchar* yData, const uchar* uData, const u
   //  qDebug() << "MainWindow::receiveYUVFrame called with sizes:" << ySize << uSize << vSize;
     yuvPlayer->updateYUVFrame(yData, uData, vData, ySize, uSize, vSize);
     //OSD测试
-    yuvPlayer->setDisplayText(NULL,  QString("剩余天数:%1 剩余次数:%2").arg(days).arg(counts));
+    QString suffix = QFileInfo(currentFile).suffix();
+    //只有导出文件才显示权限信息
+    if (suffix == "es") {
+        yuvPlayer->setDisplayText(NULL,  QString("剩余天数:%1 剩余次数:%2").arg(days).arg(counts));
+    } else {
+        yuvPlayer->setDisplayText(NULL, NULL);
+    }
+
+}
+
+void MainWindow::setDecryptionFinished()
+{
+    playButton->setText("播放结束,重新打开");
+    playButton->setEnabled(true);
+    pauseButton->setEnabled(false);
+    stopButton->setEnabled(false);
+    isPlaying = false;
+    currentFile.clear();
 }
 
 void MainWindow::setVideoSize(int width, int height)
@@ -166,4 +194,27 @@ void MainWindow::onStop()
     playButton->setEnabled(true);
     pauseButton->setEnabled(false);
     stopButton->setEnabled(false);
+}
+
+void MainWindow::onExportButtonClicked()
+{
+    ExportDialog dlg(this);
+    if (dlg.exec() == QDialog::Accepted) {
+        QDateTime endTime = dlg.getEndTime();
+        QString playDuration = dlg.getPlayDuration();
+
+        QString fileName = QFileDialog::getSaveFileName(this, "保存信息", "", "文本文件 (*.txt)");
+        if (!fileName.isEmpty()) {
+            QFile file(fileName);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&file);
+                out << "截至时间: " << endTime.toString("yyyy-MM-dd HH:mm:ss") << "\n";
+                out << "播放时间: " << playDuration << " 秒\n";
+                file.close();
+                QMessageBox::information(this, "导出成功", "信息已成功导出到文件！");
+            } else {
+                QMessageBox::warning(this, "导出失败", "无法写入文件！");
+            }
+        }
+    }
 }
