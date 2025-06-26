@@ -121,38 +121,27 @@ void SVACStreamDecoder::decryptLoop()
     emit decryptionFinished();
 }
 
-static std::string getSuffix(const std::string& str) {
-    size_t pos = str.rfind('.'); // 找到最后一个 '.'
-    if (pos != std::string::npos && pos + 1 < str.size()) {
-        return str.substr(pos + 1); // 返回 '.' 之后的部分
-    }
-    return ""; // 如果没有 '.'，返回空字符串
-}
 
 bool SVACStreamDecoder::initDecoder(const QString& filePath)
 {
     qDebug() << "Initializing decoder for file:" << filePath;
 
-    std::string suf = getSuffix(filePath.toStdString());
+    QString suffix = QFileInfo(filePath).suffix();
+
     std::string streamId = ConfigReader::Instance().getValue("Player", "stream_id");
 
-    if (suf == "es") {
+    if (suffix == "es") {
         decoder = std::make_shared<ESDecoder>(filePath.toStdString(), streamId);
+        decoder->getPlayRightInfo((unsigned int &)spanDays, (unsigned int &)spanCounts);
     }
-    else if (suf == "ps" || suf == "mp4") {
+    else if (suffix == "ps" || suffix == "mp4") {
         decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
     }
     else {
         return false;
     }
 
-   // unsigned int spandays = 0;
-    //unsigned int spanCount = 0;
-    decoder->getPlayRightInfo((unsigned int &)spanDays, (unsigned int &)spanCounts);
-
-
     // 设置帧回调
-
     decoder->setOnFrame([this](const Frame& frame) {
         if (!mainWindow) return;
 
@@ -196,4 +185,43 @@ void SVACStreamDecoder::cleanupDecoder()
     yBuffer.clear();
     uBuffer.clear();
     vBuffer.clear();
+}
+
+
+void SVACStreamDecoder::exportFile(const QString& filePath, QFile& outfile, QString deadline, QString playCounts) {
+
+    QString suffix = QFileInfo(filePath).suffix();
+    if (suffix == "mp4" || suffix == "ps") {
+        Channel::Ptr downloadChannel;
+        exporter = std::make_shared<PSDecoder>(filePath.toStdString());
+        exporter->setOnOrignFrame([&](const Frame& frame) {
+
+            std::string streamId = ConfigReader::Instance().getValue("Player", "stream_id");
+            if (!downloadChannel) {
+                downloadChannel = SDKManager::Instance().createChannel(streamId, ChannelType::DownloadChannel);
+            }
+            Frame downloadFrame;
+            downloadChannel->doWork(const_cast<Frame&>(frame), downloadFrame);
+            outfile.write((char*)downloadFrame.data.data(), downloadFrame.size);
+            std::cout << "NAL Unit (Frame) size: " << frame.size << " bytes" << std::endl;
+        });
+
+
+
+        exporter->parse();
+        //主动释放，内部调用下载完成接口
+        downloadChannel.reset();
+
+        outfile.flush();        // 确保写入数据已经落盘
+        outfile.seek(0);        // 回到文件开头
+        QByteArray head = outfile.read(1000);
+        int ret = SDKManager::Instance().setPlayRightInfo((unsigned char *)head.data(), 1000,
+                                            (char*)deadline.toStdString().c_str(), playCounts.toInt());
+        if (ret == 0 ) {
+            qDebug() << "SetPlayRightInfo Suc deadline: " << deadline<< " playCounts: " << playCounts;
+        }
+
+        qDebug() << "Exporter work done:" << outfile.fileName();
+    }
+
 }

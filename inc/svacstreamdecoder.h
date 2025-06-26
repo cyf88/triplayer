@@ -8,6 +8,7 @@
 #include <QMetaObject>
 #include <QDebug>
 #include <QMutex>
+#include <QFile>
 #include "StreamDecoder.h"
 
 // 前向声明
@@ -21,7 +22,7 @@ public:
     explicit SVACStreamDecoder(MainWindow* window, QObject *parent = nullptr);
     ~SVACStreamDecoder();
 
-   
+    void exportFile(const QString& filePath, QFile& outfile,  QString deadline, QString playCounts);
 
 signals:
     void decryptionFinished();
@@ -62,10 +63,12 @@ private:
     QByteArray uBuffer;
     QByteArray vBuffer;
 
-    int spanDays;
-    int spanCounts;
+    int spanDays = 0;
+    int spanCounts = 0;
 
     std::shared_ptr<StreamDecoder> decoder;
+
+    std::shared_ptr<StreamDecoder> exporter;
     
     // TODO: 添加SVAC解密所需的其他成员变量
     // 例如：解密密钥、解密上下文等

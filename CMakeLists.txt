@@ -38,6 +38,7 @@ set(PROJECT_SOURCES
     src/easylogging++.cc
     src/SDKManager.cpp
     src/tri_svac.cpp
+    src/exportdialog.cpp
 )
 
 # 项目头文件
@@ -58,6 +59,7 @@ set(PROJECT_HEADERS
     inc/ZxSvacDecLib.h
     inc/base_defs.h
     inc/vitech_invs.h
+    inc/exportdialog.h
 )
 
 # 添加可执行文件

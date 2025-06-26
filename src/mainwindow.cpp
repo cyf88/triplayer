@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(playButton, &QPushButton::clicked, this, &MainWindow::onPlayButtonClicked);
     connect(pauseButton, &QPushButton::clicked, this, &MainWindow::onPause);
     connect(stopButton, &QPushButton::clicked, this, &MainWindow::onStop);
+    connect(exportButton, &QPushButton::clicked, this, &MainWindow::onExportButtonClicked);
 
     // 连接解密器相关的信号和槽
     // connect(this, &MainWindow::fileSelected, decoder, &SVACStreamDecoder::onFileSelected);
@@ -201,15 +202,13 @@ void MainWindow::onExportButtonClicked()
     ExportDialog dlg(this);
     if (dlg.exec() == QDialog::Accepted) {
         QDateTime endTime = dlg.getEndTime();
-        QString playDuration = dlg.getPlayDuration();
+        QString playCounts = dlg.getPlayCounts();
 
         QString fileName = QFileDialog::getSaveFileName(this, "保存信息", "", "文本文件 (*.txt)");
         if (!fileName.isEmpty()) {
             QFile file(fileName);
-            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&file);
-                out << "截至时间: " << endTime.toString("yyyy-MM-dd HH:mm:ss") << "\n";
-                out << "播放时间: " << playDuration << " 秒\n";
+            if (file.open(QIODevice::ReadWrite)) {
+                decoder->exportFile(currentFile, file, endTime.toString("yyyy-MM-dd"), playCounts);
                 file.close();
                 QMessageBox::information(this, "导出成功", "信息已成功导出到文件！");
             } else {

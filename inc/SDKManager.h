@@ -74,8 +74,9 @@ public:
 
 	void releaseChannel(Channel::Ptr &channel);
 
-    int queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCount);
-		
+    int queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCounts);
+
+    int setPlayRightInfo(unsigned char* buffer, int bufferSize, char* deadline, unsigned int playCounts);
 private:	
 	SDKManager();
 	~SDKManager();

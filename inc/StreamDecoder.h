@@ -21,7 +21,7 @@ public:
     StreamDecoder(const std::string filePath) {
         _filePath = filePath;
     }
-    ~StreamDecoder() {};
+    ~StreamDecoder() {}
 
 
     virtual void parse() = 0;

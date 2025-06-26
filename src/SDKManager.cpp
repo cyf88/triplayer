@@ -142,12 +142,12 @@ Channel::Ptr SDKManager::createChannel(std::string deviceId, ChannelType type) {
 			return nullptr;
 		}
 		//debug  此处为了测试拿到实时点播的vkek
-        ret = TRI_SUT_GetRealStreamSecDecode(&decodeHandle, (char*)deviceId.c_str());
-        if (ret != 0) {
-            TRI_SUT_Close(decodeHandle);
-            LOG(ERROR) << "create DecryptChannel ret: " << ret;
-            //return nullptr;
-        }
+        // ret = TRI_SUT_GetRealStreamSecDecode(&decodeHandle, (char*)deviceId.c_str());
+        // if (ret != 0) {
+        //     TRI_SUT_Close(decodeHandle);
+        //     LOG(ERROR) << "create DecryptChannel ret: " << ret;
+        //     //return nullptr;
+        // }
 
         // ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
         // if (ret != 0) {
@@ -199,12 +199,22 @@ void SDKManager::releaseChannel(Channel::Ptr &channel) {
 }
 
 
-int SDKManager::queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCount) {
-    TRI_RET ret = TRI_SUT_QueryVideoPlayRightInfo((char*)"test.ps", buffer, bufferSize, &spandays, &spanCount);
+int SDKManager::queryPlayRightInfo(unsigned char* buffer, int bufferSize, unsigned int& spandays, unsigned int& spanCounts) {
+    TRI_RET ret = TRI_SUT_QueryVideoPlayRightInfo((char*)"test.ps", buffer, bufferSize, &spandays, &spanCounts);
 	if (ret != 0) {
 		LOG(ERROR) << "TRI_SUT_QueryVideoPlayRightInfo fail";
 		return ret;
 	}
 	return 0;
 }
+
+int SDKManager::setPlayRightInfo(unsigned char* buffer, int bufferSize, char* deadline, unsigned int playCounts) {
+    TRI_RET ret = TRI_SUT_SetVideoPlayRightInfo((char*)"test.ps", buffer, bufferSize, deadline, playCounts);
+    if (ret != 0) {
+        LOG(ERROR) << "TRI_SUT_SetVideoPlayRightInfo fail deadline: " << deadline << " playCounts: " << playCounts;
+        return ret;
+    }
+    return 0;
+}
+
 
