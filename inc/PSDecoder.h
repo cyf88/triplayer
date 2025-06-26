@@ -48,7 +48,7 @@ private:
     int ResearchPSTag(unsigned char* buf, unsigned int len);
 
     FILE* fin;
-    //volatile bool _bStop = false;
+
     unsigned char m_psAudioType;
     unsigned char m_psStreamType;
     unsigned char* m_psbuf = new unsigned char[2 * 1024 * 1024];

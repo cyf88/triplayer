@@ -24,7 +24,7 @@ void ESDecoder::parse() {
     std::vector<uint8_t> buffer(_bufferSize);
     size_t fileSize = getFileSize(file);
 
-    while (file.tellg() < fileSize ) {
+    while (file.tellg() < fileSize &&  !_bStop) {
         if (_bPause) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
