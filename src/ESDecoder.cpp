@@ -30,6 +30,7 @@ void ESDecoder::parse() {
             continue;
         }
         //读取一个块
+        size_t currentFilePos = file.tellg();
         file.read(reinterpret_cast<char*>(buffer.data()), _bufferSize);
         size_t bytesRead = file.gcount();
         if (bytesRead == 0) {
@@ -38,7 +39,7 @@ void ESDecoder::parse() {
 
         // 处理当前读取的块
         size_t lastPos;
-        parseBlock(buffer, bytesRead, lastPos);
+        parseBlock(buffer, bytesRead, lastPos, currentFilePos);
 
         // 更新起始位置
         file.seekg(lastPos - _bufferSize, std::ios::cur);
@@ -48,7 +49,7 @@ void ESDecoder::parse() {
 
 
 void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
-    size_t bytesRead, size_t& startPos) {
+    size_t bytesRead, size_t& startPos, size_t curFilePos) {
 
     size_t bufferPos = 0;
     size_t bufferEnd = bytesRead;
@@ -59,7 +60,16 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
     while (bufferPos < bufferEnd) {
         // 查找NAL单元起始码（0x000001E0 或 0x00000001DC）
         size_t endPos = findNALStartCode(buffer, bufferPos, bufferEnd);
-        if (endPos == std::string::npos) break;
+        if (endPos == std::string::npos) {
+            if (bufferSPS != 0) {
+                //前移到SPS位置
+                bufferPos = bufferSPS;
+            } else {
+
+            }
+            break;
+        }
+
 
         if (endPos > 4 ) {
 
@@ -69,12 +79,22 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
             }
             else {
 
+                Frame frame;
                 if (bufferSPS != 0) {
-                    //如果是SPS帧，那么分割是需要从bufferSPS位置开始
+                    //如果是SPS帧，那么分割是需要从bufferSPS位置开始                 
                     bufferPos = bufferSPS;
+
+                    //目前只记录关键帧的位置，
+                    frame.hasSPS = true;
+                    frame.offset = curFilePos + bufferPos - 5;
+                    try {
+                        frame.frameNum = _frameNumMap.at(frame.offset);
+                        std::cout << " es frameNum: " << frame.frameNum << std::endl;
+                    } catch (const std::out_of_range& e) {
+                        std::cout << "Key not found" << std::endl;
+                    }
                 }
 
-                Frame frame;
                 frame.data = std::vector<uint8_t>(buffer.begin() + bufferPos - 5, buffer.begin() + endPos - 4);
                 frame.size = frame.data.size();
                 frame.timestamp = 0; // 如果有时间戳信息，可以在这里填充
@@ -86,10 +106,10 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
                     _onOriginFrame(frame);
                 }
                 //debug 
-                //std::ofstream outfile;
-                //outfile.open("E:\\code\\VSS\\sdk2\\bin\\x64-Debug\\Debug//es//es_frame_" + std::to_string(_frameNum) + ".es", std::ios::out | std::ios::binary | std::ios::trunc);
-                //outfile.write((char*)frame.data.data(), frame.size);
-                //outfile.close();
+                std::ofstream outfile;
+                outfile.open("F://es//es_frame_" + std::to_string(_frameNum) + ".es", std::ios::out | std::ios::binary | std::ios::trunc);
+                outfile.write((char*)frame.data.data(), frame.size);
+                outfile.close();
 
                 // 如果设置了回调函数，调用回调
                 if (_onFrame) {
@@ -141,3 +161,6 @@ size_t ESDecoder::findNALStartCode(const std::vector<uint8_t>& buffer, size_t st
     }
     return std::string::npos; // 没有找到起始码
 }
+
+
+

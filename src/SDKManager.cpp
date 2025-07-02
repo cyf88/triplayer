@@ -34,6 +34,7 @@ void DecryptionChannel::doWork(Frame& input, Frame& output) const {
 	output.data = std::vector<uint8_t>(out->img_buf, out->img_buf + out->imgsz);
 	output.size = out->imgsz;
 	output.keyFrame = (out->type == 'I') ? true : false;
+    output.frameNum = input.frameNum;
 	TRI_SUT_Free(&out);
 	return;
 }

@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     , isPlaying(false)
 {
     // 设置窗口标题和大小
-    setWindowTitle("SVAC视频播放器");
+    setWindowTitle("35114密流播放器");
     resize(800, 600);
 
     // 创建中央部件和布局
@@ -22,6 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 创建视频播放器组件
     yuvPlayer = new YUVPlayer(this);
+
+    progressSlider = new QSlider(Qt::Horizontal, this);
+    progressSlider->setRange(0, 100);
+    progressSlider->setValue(0);
 
     // 创建按钮布局
     buttonLayout = new QHBoxLayout();
@@ -41,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 添加组件到主布局
     mainLayout->addWidget(yuvPlayer);
+    mainLayout->addWidget(progressSlider);
     mainLayout->addLayout(buttonLayout);
 
     // 创建解密器
@@ -66,6 +71,10 @@ MainWindow::MainWindow(QWidget *parent)
     //接受解密结束的通知
     connect(decoder, &SVACStreamDecoder::decryptionFinished, this, &MainWindow::setDecryptionFinished);
     
+
+   // connect(progressSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
+
+
     // 初始化按钮状态
     pauseButton->setEnabled(false);
     stopButton->setEnabled(false);
@@ -204,16 +213,22 @@ void MainWindow::onExportButtonClicked()
         QDateTime endTime = dlg.getEndTime();
         QString playCounts = dlg.getPlayCounts();
 
-        QString fileName = QFileDialog::getSaveFileName(this, "保存信息", "", "文本文件 (*.txt)");
+        QString fileName = QFileDialog::getSaveFileName(this, "保存文件", "", "密流文件 (*.es)");
         if (!fileName.isEmpty()) {
             QFile file(fileName);
             if (file.open(QIODevice::ReadWrite)) {
                 decoder->exportFile(currentFile, file, endTime.toString("yyyy-MM-dd"), playCounts);
                 file.close();
-                QMessageBox::information(this, "导出成功", "信息已成功导出到文件！");
+                QMessageBox::information(this, "导出成功", "密流文件已成功导出！");
             } else {
                 QMessageBox::warning(this, "导出失败", "无法写入文件！");
             }
         }
+
+
     }
+}
+
+void MainWindow::moveSlider(int value) {
+    progressSlider->setValue(value);
 }

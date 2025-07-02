@@ -5,6 +5,7 @@ project(triplayer VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 # 设置源文件编码为 UTF-8（MSVC 特有）
 if(MSVC)
     add_compile_options(/utf-8 /permissive- /Zc:__cplusplus /Zc:strictStrings-)

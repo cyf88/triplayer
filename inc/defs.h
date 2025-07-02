@@ -16,9 +16,14 @@ enum
 struct Frame {
 
 	bool keyFrame;
+    bool hasSPS = false;
 	std::vector<uint8_t> data;
 	size_t size;
 	uint64_t timestamp;
+    //文件中的偏移
+    size_t offset;
+    //帧序号
+    size_t frameNum;
 	int width;
 	int height;
 

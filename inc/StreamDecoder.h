@@ -6,6 +6,31 @@
 #include "SDKManager.h"
 #include "easylogging++.h"
 #include <fstream>
+#include <map>
+
+struct IDRFrame {
+    size_t offset;  // 在文件中的偏移
+    size_t frameIndex;
+};
+enum NaluType {
+    NAL_NONE_IDR = 1,
+    NAL_IDR = 2,
+    NAL_NONE_IDR_SVC = 3,
+    NAL_IDR_SVC = 4,
+    NAL_SURVEI_UNIT = 5,
+    NAL_SEI = 6,
+    NAL_SPS = 7,
+    NAL_PPS = 8,
+    NAL_SES = 9,
+    NAL_AUTH = 10,
+    NAL_E0STREAM = 11,
+    NAL_RESERVED1 = 12,
+    NAL_CHAPTER6 = 13,
+    NAL_RESERVED2 = 14,
+    NAL_SVC_PPS = 15,
+};
+
+#define SVAC_TYPE(v) ((uint8_t)(v>>2)&0x0F)
 
 
 class StreamDecoder {
@@ -56,6 +81,12 @@ public:
         return _bStop;
     }
 
+    virtual size_t getKeyFrameSum() const final {
+        return _frameNumMap.size();
+    }
+
+    //virtual bool getKeyFrameSum() = 0;
+
     // 获取播放权限
     virtual bool getPlayRightInfo(unsigned int& spandays, unsigned int& spanCount) const final {
        // 读取文件前1000字节
@@ -78,6 +109,38 @@ public:
 
     }
 
+    virtual bool scanIDRs() {
+
+        std::ifstream file(_filePath, std::ios::binary);
+        if (!file.is_open()) {
+            LOG(INFO) << "Failed to open file for scanIDRs";
+            return false;
+        }
+        const uint8_t startCode[] = {0x00, 0x00, 0x00, 0x01};
+        std::vector<uint8_t> buffer(10 * 1024 * 1024); // 10MB 缓冲
+        file.seekg(0);
+        size_t offset = 0;
+        size_t frameIdx = 0;
+
+        while (!file.eof()) {
+            file.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+            std::streamsize bytesRead = file.gcount();
+
+            for (size_t i = 0; i + 4 < (size_t)bytesRead; ++i) {
+                if (memcmp(&buffer[i], startCode, 4) == 0) {
+                    uint8_t nalType = SVAC_TYPE(buffer[i + 4]);
+                    if (nalType == NAL_SPS) {
+                        _frameNumMap.emplace(offset+i, frameIdx++);
+                    }
+                }
+            }
+            offset += bytesRead;
+        }
+        file.close();
+    }
+
+
+
 
 protected:
 
@@ -86,6 +149,9 @@ protected:
     // 文件路径
     std::string _filePath;
     std::string _streamId;
+
+    //int _keyFrameSum;
+    bool keyFrameSumFlag;
 
 
     // 回调函数
@@ -100,6 +166,9 @@ protected:
     SVACDecoder::Ptr _svacDecoder;
 
     Channel::Ptr _decryptChannel;
+
+    //关键帧在文件中的位置，为了实现播放拖动seek, <offset, frameNum>
+    std::map<size_t, size_t> _frameNumMap;
 
 };
 

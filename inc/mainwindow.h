@@ -6,6 +6,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QSlider>
 #include "yuvplayer.h"
 #include "svacstreamdecoder.h"
 
@@ -23,6 +24,8 @@ public slots:
     // 提供接口用于接收YUV数据
     void receiveYUVFrame(const uchar* yData, const uchar* uData, const uchar* vData,
                         int ySize, int uSize, int vSize, int days, int counts);
+
+    void moveSlider(int value);
 
     void setDecryptionFinished();
 
@@ -49,6 +52,8 @@ private:
     QPushButton *pauseButton;
     QPushButton *stopButton;
     QPushButton *exportButton;
+
+    QSlider *progressSlider;
 
     bool isPlaying;
     QString currentFile;

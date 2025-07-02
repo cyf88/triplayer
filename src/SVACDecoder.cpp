@@ -37,6 +37,8 @@ bool SVACDecoder::inputFrame(const Frame& frame) {
 			TRI_SVAC_DECODE(&_vdCtx, (unsigned char*)frame.data.data(), frame.size, _tmpYUVBuf, &outSize, outFrame.width, outFrame.height);
 			outFrame.data = std::vector<uint8_t>(_tmpYUVBuf, _tmpYUVBuf + outSize);
 			outFrame.size = outSize;
+            outFrame.keyFrame = frame.keyFrame;
+            outFrame.frameNum = frame.frameNum;
 			_cb(outFrame);
 		}
 		

@@ -133,9 +133,11 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     if (suffix == "es") {
         decoder = std::make_shared<ESDecoder>(filePath.toStdString(), streamId);
         decoder->getPlayRightInfo((unsigned int &)spanDays, (unsigned int &)spanCounts);
+        decoder->scanIDRs();
     }
     else if (suffix == "ps" || suffix == "mp4") {
         decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
+        decoder->scanIDRs();
     }
     else {
         return false;
@@ -164,8 +166,14 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
                 frame.size / 6,                     // V大小
                 spanDays,
                 spanCounts
-
             );
+            if (frame.keyFrame) {
+                qDebug() << "frame Num: " <<frame.frameNum;
+                int sliderValue = (double)(frame.frameNum+1 )* 100 / decoder->getKeyFrameSum();
+                qDebug() << "sliderValue: " << sliderValue;
+                mainWindow->moveSlider(sliderValue);
+            }
+
         }, Qt::QueuedConnection);
     });
 
