@@ -44,7 +44,7 @@ private:
     int _frameNum = 0;
 
 
-    void DecodePSPacket(unsigned char* pBuf, unsigned int size);
+    void DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t offset);
     int ResearchPSTag(unsigned char* buf, unsigned int len);
 
     FILE* fin;

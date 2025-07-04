@@ -27,11 +27,11 @@ void PSDecoder::parse() {
 		LOG(DEBUG) << "Cann't open input file " << _filePath;
 		return ;
 	}
-
+    long pos = 0;
 	while (!_bStop) {
-		int readlen = fread(m_pPSbuf + buflen, 1, PSBUFLEN - buflen, fin);
+		int readlen = fread(m_pPSbuf + buflen, 1, PSBUFLEN - buflen, fin); 
 		if (readlen <= 0) {
-			DecodePSPacket(m_pPSbuf, buflen);
+            DecodePSPacket(m_pPSbuf, buflen, pos);
 			break;
 		}
 		readlen += buflen;
@@ -66,7 +66,10 @@ void PSDecoder::parse() {
 			else if (iRvNext > 0)
 			{
 				iRvNext += 4;
-				DecodePSPacket(buf + buflen, iRvNext);							//解析出裸码流并解码
+                if (buflen == 0) {
+                    int offset = buflen;
+                }
+                DecodePSPacket(buf + buflen, iRvNext, pos + buflen);							//解析出裸码流并解码
 				buflen += iRvNext;
 				continue;
 			}
@@ -79,7 +82,8 @@ void PSDecoder::parse() {
 				break;
 			}
 		}
-	}
+        pos = ftell(fin) - buflen;
+    }
 }
 
 
@@ -100,7 +104,7 @@ int PSDecoder::ResearchPSTag(unsigned char* buf, unsigned int len) {
 	return ret;
 }
 
-void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size) {
+void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t offset) {
 	unsigned char* pCurBuf = pBuf;
 	int m_PsBufLen = 0;
 	int frametype = P_frame;
@@ -244,6 +248,16 @@ void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size) {
 		frame.data = std::vector<uint8_t>(m_psbuf, m_psbuf + m_PsBufLen);
 		frame.size = frame.data.size();
 		frame.timestamp = 0; // 如果有时间戳信息，可以在这里填充
+        if (frametype == I_frame) {
+            frame.hasSPS = true;
+            frame.offset = offset + 70;
+            try {
+                frame.frameNum = _frameNumMap.at(frame.offset);
+                std::cout << " es frameNum: " << frame.frameNum << std::endl;
+            } catch (const std::out_of_range& e) {
+                std::cout << "Key not found" << std::endl;
+            }
+        }
 		_frameNum++;
 		if (_onOriginFrame) {
 			_onOriginFrame(frame);
