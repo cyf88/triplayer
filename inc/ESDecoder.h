@@ -19,6 +19,7 @@ public:
     using StreamDecoder::StreamDecoder;
 
 	void parse() override;
+    void setPosition(int pos) override;
 
 private:
 

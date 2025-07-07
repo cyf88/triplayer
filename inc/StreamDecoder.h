@@ -51,6 +51,8 @@ public:
 
     virtual void parse() = 0;
 
+    virtual void setPosition(int pos) = 0;
+
     //解码帧回调,不要子类实现
     virtual void setOnFrame(OnFrame onFrame) final {
         _onFrame = onFrame;
@@ -131,12 +133,15 @@ public:
                     uint8_t nalType = SVAC_TYPE(buffer[i + 4]);
                     if (nalType == NAL_SPS) {
                         _frameNumMap.emplace(offset+i, frameIdx++);
+                        //_biFrameNumMap.emplace(frameIdx, offset+i);
                     }
                 }
             }
             offset += bytesRead;
         }
         file.close();
+
+        LOG(INFO) << _filePath <<" scanIDRs keyFrameNum: " << _frameNumMap.size();
     }
 
 
@@ -169,6 +174,8 @@ protected:
 
     //关键帧在文件中的位置，为了实现播放拖动seek, <offset, frameNum>
     std::map<size_t, size_t> _frameNumMap;
+    //反向map，用于快速定位 <frameNum, offset>
+    std::map<size_t, size_t> _biFrameNumMap;
 
 };
 

@@ -37,7 +37,7 @@ public:
     ~PSDecoder();
 
     void parse() override;
-
+    void setPosition(int pos) override;
 
 private:
 

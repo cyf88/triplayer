@@ -72,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(decoder, &SVACStreamDecoder::decryptionFinished, this, &MainWindow::setDecryptionFinished);
     
 
-   // connect(progressSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
+    //connect(progressSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
 
 
     // 初始化按钮状态
@@ -158,6 +158,7 @@ void MainWindow::setVideoSize(int width, int height)
 void MainWindow::onPlayButtonClicked()
 {
     if (!isPlaying) {
+        //没有暂停标志，用currentFile.isEmpty区分暂停和停止
         if (currentFile.isEmpty()) {
             // 如果没有打开文件，先打开文件
             QString fileName = QFileDialog::getOpenFileName(this,

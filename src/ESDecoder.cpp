@@ -47,7 +47,6 @@ void ESDecoder::parse() {
     }
 }
 
-
 void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
     size_t bytesRead, size_t& startPos, size_t curFilePos) {
 
@@ -162,5 +161,13 @@ size_t ESDecoder::findNALStartCode(const std::vector<uint8_t>& buffer, size_t st
     return std::string::npos; // 没有找到起始码
 }
 
+
+void ESDecoder::setPosition(int pos) {
+    if (_biFrameNumMap.size() > 10 && (pos>=0 && pos <= 100)) {
+        int frameNum = _biFrameNumMap.size() * pos / 100;
+        size_t offset = _biFrameNumMap.at(frameNum);
+
+    }
+}
 
 

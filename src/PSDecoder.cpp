@@ -297,4 +297,6 @@ void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t of
 	return;
 }
 
+void PSDecoder::setPosition(int pos) {
 
+}
