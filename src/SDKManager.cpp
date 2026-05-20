@@ -101,7 +101,7 @@ SDKManager::SDKManager() {
 
 	std::string ukeyPin = ConfigReader::Instance().getValue("Player", "ukey_pin");
 	LOG(INFO) << "ukeyPin: " << ukeyPin;
-	if (!TRI_SUT_Init((char*)ukeyPin.c_str())) {
+    if (TRI_SUT_Init((char*)ukeyPin.c_str()) != 0) {
 		LOG(INFO) << "TRI_SUT_Init fail with pin:" << ukeyPin;
 	}
 
@@ -177,12 +177,12 @@ Channel::Ptr SDKManager::createChannel(std::string deviceId, ChannelType type) {
 			LOG(ERROR) << "create DecryptChannel ret: " << ret;
 			return nullptr;
 		}
-		ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
-		if (ret != 0) {
-			TRI_SUT_Close(decodeHandle);
-			LOG(ERROR) << "create DecryptChannel ret: " << ret;
-			return nullptr;
-		}
+        // ret = TRI_SUT_GetPlayBackSecDecode(&decodeHandle, (char*)deviceId.c_str(), NULL, NULL);
+        // if (ret != 0) {
+        // 	TRI_SUT_Close(decodeHandle);
+        // 	LOG(ERROR) << "create DecryptChannel ret: " << ret;
+        // 	return nullptr;
+        // }
 		ret = TRI_SUT_StartupForSecDownload(decodeHandle);
 		if (ret != 0) {
 			TRI_SUT_Close(decodeHandle);

@@ -250,7 +250,7 @@ void PSDecoder::DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t of
 		frame.timestamp = 0; // 如果有时间戳信息，可以在这里填充
         if (frametype == I_frame) {
             frame.hasSPS = true;
-            frame.offset = offset + 70;
+            frame.offset = offset + 170;
             try {
                 frame.frameNum = _frameNumMap.at(frame.offset);
                 std::cout << " es frameNum: " << frame.frameNum << std::endl;

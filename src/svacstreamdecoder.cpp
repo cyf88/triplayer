@@ -175,9 +175,11 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
             }
 
         }, Qt::QueuedConnection);
+
+        QThread::msleep(20);
     });
 
-    QThread::msleep(40);
+
 
     return true;
 }
@@ -221,9 +223,17 @@ void SVACStreamDecoder::exportFile(const QString& filePath, QFile& outfile, QStr
         downloadChannel.reset();
 
         outfile.flush();        // 确保写入数据已经落盘
+
         outfile.seek(0);        // 回到文件开头
-        QByteArray head = outfile.read(1000);
-        int ret = SDKManager::Instance().setPlayRightInfo((unsigned char *)head.data(), 1000,
+        size_t fileSize = outfile.size();
+        int bufSize =  3*1024*1024;
+
+        if (fileSize < bufSize) {
+            bufSize = fileSize;
+        }
+
+        QByteArray head = outfile.read(bufSize);
+        int ret = SDKManager::Instance().setPlayRightInfo((unsigned char *)head.data(), bufSize,
                                             (char*)deadline.toStdString().c_str(), playCounts.toInt());
         if (ret == 0 ) {
             qDebug() << "SetPlayRightInfo Suc deadline: " << deadline<< " playCounts: " << playCounts;
