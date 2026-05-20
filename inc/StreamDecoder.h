@@ -7,6 +7,7 @@
 #include "easylogging++.h"
 #include <fstream>
 #include <map>
+#include <QString>
 
 struct IDRFrame {
     size_t offset;  // 在文件中的偏移
@@ -98,8 +99,17 @@ public:
             return false;
         }
 
-        char buff [1000];
-        file.read(buff, 1000);
+        file.seekg(0, std::ios::end);
+        size_t fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+        int bufSize =  3*1024*1024;
+
+        if (fileSize < bufSize) {
+            bufSize = fileSize;
+        }
+
+        char* buff = (char*)malloc(bufSize);
+        file.read(buff, bufSize);
         size_t bytesRead = file.gcount();
         file.close();
         LOG(INFO) << "Read first" << bytesRead << "bytes from file";
@@ -113,11 +123,18 @@ public:
 
     virtual bool scanIDRs() {
 
+        // QString qstr = QString::fromUtf8(_filePath);
+
+        // std::wstring wpath = qstr.toStdWString();
+
+        // QString qstr = QString::fromUtf8(_filePath);
+
         std::ifstream file(_filePath, std::ios::binary);
         if (!file.is_open()) {
-            LOG(INFO) << "Failed to open file for scanIDRs";
+            LOG(INFO) << "Failed to open file for scanIDRs: " << _filePath;
             return false;
         }
+
         const uint8_t startCode[] = {0x00, 0x00, 0x00, 0x01};
         std::vector<uint8_t> buffer(10 * 1024 * 1024); // 10MB 缓冲
         file.seekg(0);
