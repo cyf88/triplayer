@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QApplication>
 #include "ESDecoder.h"
-#include "PSDecoder.h"
+#include "PSDecoder2.h"
 #include "config.h"
 #include "mainwindow.h"
 #include <QCoreApplication>
@@ -136,7 +136,7 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
         decoder->scanIDRs();
     }
     else if (suffix == "ps" || suffix == "mp4") {
-        decoder = std::make_shared<PSDecoder>(filePath.toStdString(), streamId);
+        decoder = std::make_shared<PSDecoder2>(filePath.toStdString(), streamId);
         decoder->scanIDRs();
     }
     else {
@@ -203,7 +203,7 @@ void SVACStreamDecoder::exportFile(const QString& filePath, QFile& outfile, QStr
     QString suffix = QFileInfo(filePath).suffix();
     if (suffix == "mp4" || suffix == "ps") {
         Channel::Ptr downloadChannel;
-        exporter = std::make_shared<PSDecoder>(filePath.toStdString());
+        exporter = std::make_shared<PSDecoder2>(filePath.toStdString());
         exporter->setOnOrignFrame([&](const Frame& frame) {
 
             std::string streamId = ConfigReader::Instance().getValue("Player", "stream_id");

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(triplayer VERSION 1.0 LANGUAGES CXX)
+project(triplayer VERSION 1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,6 +27,9 @@ link_directories(${PROJECT_SOURCE_DIR}/lib)
 # 查找 Qt6 包
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Network Concurrent)
 
+# 3rdpart: media-server libmpeg（纯 C 静态库，放在 find_package 之后避免 AUTOGEN 警告）
+add_subdirectory(3rdpart/media-server/libmpeg)
+
 # 项目源文件
 set(PROJECT_SOURCES
     src/main.cpp
@@ -36,6 +39,7 @@ set(PROJECT_SOURCES
     src/SVACDecoder.cpp
     src/ESDecoder.cpp
     src/PSDecoder.cpp
+    src/PSDecoder2.cpp
     src/easylogging++.cc
     src/SDKManager.cpp
     src/tri_svac.cpp
@@ -50,6 +54,7 @@ set(PROJECT_HEADERS
     inc/SVACDecoder.h
     inc/ESDecoder.h
     inc/PSDecoder.h
+    inc/PSDecoder2.h
     inc/StreamDecoder.h
     inc/defs.h
     inc/SDKManager.h
@@ -85,6 +90,7 @@ target_link_libraries(triplayer PRIVATE
 target_link_libraries(triplayer PRIVATE
     ZxSvacDecLib
     p35114_sdk
+    mpeg
 )
 
 # Debug 模式下定义调试宏（用于链接 Qt debug dll）

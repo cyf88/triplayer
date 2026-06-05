@@ -10,6 +10,7 @@
 
 
 #define PSBUFLEN (1 * 1024 * 1024)
+#define ES_BUFLEN (2 * 1024 * 1024)
 #define PS_PES_AUDIO					(0x000001C0)
 #define PS_PES_VIDEO					(0x000001E0)
 
@@ -44,14 +45,25 @@ private:
     int _frameNum = 0;
 
 
-    void DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t offset);
+    int DecodePSPacket(unsigned char* pBuf, unsigned int size, size_t offset);
     int ResearchPSTag(unsigned char* buf, unsigned int len);
 
-    FILE* fin;
+    void resetSession();
+    static unsigned int readLe32(const unsigned char* p);
+    void appendEs(const unsigned char* data, int len);
+    void consumeVideoPes(unsigned char*& pCurBuf, unsigned char* packEnd);
+    void skipAudioPes(unsigned char*& pCurBuf, unsigned char* packEnd);
+    void parseProgramStreamMap(unsigned char* pCurBuf, int psmlength);
+    void emitAccumulatedFrame(int frametype, size_t offset);
+    void flushRemainingEs(int frametype, size_t offset);
 
-    unsigned char m_psAudioType;
-    unsigned char m_psStreamType;
-    unsigned char* m_psbuf = new unsigned char[2 * 1024 * 1024];
+    FILE* fin = nullptr;
+
+    unsigned char m_psAudioType = 0;
+    unsigned char m_psStreamType = 0;
+    int m_PsBufLen = 0;
+    int m_pendingPesBytes = 0;
+    unsigned char* m_psbuf = new unsigned char[ES_BUFLEN];
     unsigned char* m_pPSbuf = new unsigned char[PSBUFLEN];
 
 
