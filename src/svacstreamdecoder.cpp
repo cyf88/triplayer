@@ -1,6 +1,7 @@
 #include "svacstreamdecoder.h"
 #include <QDebug>
 #include <QApplication>
+#include <QtGlobal>
 #include "ESDecoder.h"
 #include "PSDecoder2.h"
 #include "config.h"
@@ -59,20 +60,24 @@ void SVACStreamDecoder::onStartDecryption()
     qDebug() << "Current thread ID in onStartDecryption:" << QThread::currentThreadId();
     if (!isRunning) {
         isRunning = true;
-        isPaused = false;    
+        isPaused.store(false);
         // 使用 QMetaObject::invokeMethod 确保在工作线程中执行
         QMetaObject::invokeMethod(this, &SVACStreamDecoder::decryptLoop, Qt::QueuedConnection);
-    } else if (isPaused) {
-        isPaused = false;
-        decoder->setPause(false);
+    } else if (isPaused.load()) {
+        isPaused.store(false);
+        if (decoder) {
+            decoder->setPause(false);
+        }
     }
 }
 
 void SVACStreamDecoder::onPauseDecryption()
 {
-
-    decoder->setPause(true);
-    isPaused = true;
+    ++seekGeneration;
+    isPaused.store(true);
+    if (decoder) {
+        decoder->setPause(true);
+    }
 }
 
 void SVACStreamDecoder::onStopDecryption()
@@ -81,8 +86,17 @@ void SVACStreamDecoder::onStopDecryption()
     if (decoder) {
         decoder->setStop(true);
     }
+    ++seekGeneration;
     isRunning = false;
-    isPaused = false;
+    isPaused.store(false);
+}
+
+void SVACStreamDecoder::onSeek(int position)
+{
+    ++seekGeneration;
+    if (decoder) {
+        decoder->requestSeek(position);
+    }
 }
 
 void SVACStreamDecoder::decryptLoop()
@@ -137,46 +151,61 @@ bool SVACStreamDecoder::initDecoder(const QString& filePath)
     }
     else if (suffix == "ps" || suffix == "mp4") {
         decoder = std::make_shared<PSDecoder2>(filePath.toStdString(), streamId);
-        decoder->scanIDRs();
+        if (!decoder->scanTimestampIndex()) {
+            qDebug() << "Timestamp scan failed, fallback to IDR scan:" << filePath;
+            decoder->scanIDRs();
+        } else {
+            qDebug() << "Timestamp index ready, durationMs:" << decoder->getDurationMs();
+        }
     }
     else {
         return false;
     }
 
+    const quint64 durationMs = decoder->getDurationMs();
+    const quint64 fileSize = decoder->getFileSize();
+    QMetaObject::invokeMethod(mainWindow, [this, durationMs, fileSize]() {
+        mainWindow->setMediaInfo(static_cast<qint64>(durationMs), static_cast<qint64>(fileSize));
+    }, Qt::QueuedConnection);
+
     // 设置帧回调
     decoder->setOnFrame([this](const Frame& frame) {
-        if (!mainWindow) return;
+        if (!mainWindow || isPaused.load()) {
+            return;
+        }
 
-        // 设置视频尺寸
         frameWidth = frame.width;
         frameHeight = frame.height;
         mainWindow->setVideoSize(frameWidth, frameHeight);
 
-        // qDebug() << "Current thread ID:" << QThread::currentThreadId()
-        //          << "Main thread ID:" << QApplication::instance()->thread()->currentThreadId();
-        // 确保在主线程中处理
-        QMetaObject::invokeMethod(mainWindow, [this, frame]() {
-            // 更新YUV数据
+        qint64 progressMs = 0;
+        if (decoder) {
+            progressMs = decoder->getProgressMs(
+                frame.timestamp, frame.frameNum, frame.offset);
+        }
+
+        const uint64_t generation = seekGeneration.load();
+
+        QMetaObject::invokeMethod(mainWindow, [this, frame, progressMs, generation]() {
+            if (generation != seekGeneration.load() || isPaused.load()) {
+                return;
+            }
+
             mainWindow->receiveYUVFrame(
-                frame.data.data(),                    // Y数据
-                frame.data.data() + frame.size * 2/3, // U数据
-                frame.data.data() + frame.size * 5/6, // V数据
-                frame.size * 2/3,                     // Y大小
-                frame.size / 6,                       // U大小
-                frame.size / 6,                     // V大小
+                frame.data.data(),
+                frame.data.data() + frame.size * 2/3,
+                frame.data.data() + frame.size * 5/6,
+                frame.size * 2/3,
+                frame.size / 6,
+                frame.size / 6,
                 spanDays,
                 spanCounts
             );
-            if (frame.keyFrame) {
-                qDebug() << "frame Num: " <<frame.frameNum;
-                int sliderValue = (double)(frame.frameNum+1 )* 100 / decoder->getKeyFrameSum();
-                qDebug() << "sliderValue: " << sliderValue;
-                mainWindow->moveSlider(sliderValue);
-            }
 
+            mainWindow->syncPlaybackProgress(progressMs);
         }, Qt::QueuedConnection);
 
-        QThread::msleep(20);
+        QThread::msleep(10);
     });
 
 

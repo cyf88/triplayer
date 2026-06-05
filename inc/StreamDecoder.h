@@ -7,6 +7,9 @@
 #include "easylogging++.h"
 #include <fstream>
 #include <map>
+#include <vector>
+#include <cstdint>
+#include <atomic>
 #include <QString>
 
 struct IDRFrame {
@@ -32,6 +35,11 @@ enum NaluType {
 };
 
 #define SVAC_TYPE(v) ((uint8_t)(v>>2)&0x0F)
+
+struct TimestampIndexEntry {
+    size_t offset;
+    uint64_t ptsMs;
+};
 
 
 class StreamDecoder {
@@ -88,6 +96,68 @@ public:
         return _frameNumMap.size();
     }
 
+    uint64_t getDurationMs() const {
+        return _durationMs;
+    }
+
+    uint64_t getStartPtsMs() const {
+        return _startPtsMs;
+    }
+
+    size_t getFileSize() const {
+        return _fileSize;
+    }
+
+    bool hasTimestampIndex() const;
+
+    static uint64_t ptsToMs(int64_t pts, int64_t dts);
+
+    int getProgressPercent(uint64_t ptsMs, size_t keyFrameNum = 0, size_t byteOffset = 0) const;
+
+    qint64 getProgressMs(uint64_t ptsMs, size_t keyFrameNum = 0, size_t byteOffset = 0) const;
+
+    size_t resolveKeyFrameIndex(size_t byteOffset) const;
+
+    size_t getOffsetForTimePercent(int percent) const;
+
+    size_t resolveSeekOffset(int percent) const;
+
+    void requestSeek(int percent);
+
+    bool consumeSeekRequest(size_t& outOffset);
+
+    virtual bool scanTimestampIndex() {
+        return false;
+    }
+
+    void finalizeTimestampIndex();
+
+    size_t getOffsetForPosition(int pos) const {
+        if (_frameNumMap.empty()) {
+            return 0;
+        }
+        if (pos < 0) {
+            pos = 0;
+        } else if (pos > 100) {
+            pos = 100;
+        }
+        const size_t targetIdx = static_cast<size_t>(pos) * (_frameNumMap.size() - 1) / 100;
+        size_t idx = 0;
+        for (const auto& entry : _frameNumMap) {
+            if (idx == targetIdx) {
+                return entry.first;
+            }
+            ++idx;
+        }
+        return _frameNumMap.rbegin()->first;
+    }
+
+    void resetDecodeState() {
+        _svacDecoder.reset();
+        _decryptChannel.reset();
+        _frameNum = 0;
+    }
+
     //virtual bool getKeyFrameSum() = 0;
 
     // 获取播放权限
@@ -135,6 +205,10 @@ public:
             return false;
         }
 
+        file.seekg(0, std::ios::end);
+        _fileSize = static_cast<size_t>(file.tellg());
+        file.seekg(0, std::ios::beg);
+
         const uint8_t startCode[] = {0x00, 0x00, 0x00, 0x01};
         std::vector<uint8_t> buffer(10 * 1024 * 1024); // 10MB 缓冲
         file.seekg(0);
@@ -149,8 +223,9 @@ public:
                 if (memcmp(&buffer[i], startCode, 4) == 0) {
                     uint8_t nalType = SVAC_TYPE(buffer[i + 4]);
                     if (nalType == NAL_SPS) {
-                        _frameNumMap.emplace(offset+i, frameIdx++);
-                        //_biFrameNumMap.emplace(frameIdx, offset+i);
+                        _frameNumMap.emplace(offset + i, frameIdx);
+                        _biFrameNumMap.emplace(frameIdx, offset + i);
+                        ++frameIdx;
                     }
                 }
             }
@@ -181,9 +256,14 @@ protected:
 
     OnFrame _onOriginFrame;
 
-    volatile bool _bStop = false;
+    std::atomic<bool> _bStop{false};
 
-    volatile bool _bPause = false;
+    std::atomic<bool> _bPause{false};
+
+    std::atomic<int> _seekReadBudget{0};
+
+    std::atomic<bool> _needSeek{false};
+    std::atomic<int> _pendingSeekPercent{0};
     
     SVACDecoder::Ptr _svacDecoder;
 
@@ -194,6 +274,10 @@ protected:
     //反向map，用于快速定位 <frameNum, offset>
     std::map<size_t, size_t> _biFrameNumMap;
 
+    std::vector<TimestampIndexEntry> _timestampIndex;
+    uint64_t _startPtsMs = 0;
+    uint64_t _durationMs = 0;
+    size_t _fileSize = 0;
 };
 
 #endif

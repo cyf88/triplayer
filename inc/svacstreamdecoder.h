@@ -33,6 +33,7 @@ public slots:
     void onStartDecryption();
     void onPauseDecryption();
     void onStopDecryption();
+    void onSeek(int position);
 
 private slots:
     // 解密线程函数
@@ -49,7 +50,7 @@ private:
     QString currentFile;
     
     std::atomic<bool> isRunning;
-    bool isPaused;
+    std::atomic<bool> isPaused{false};
     
     // 解密线程
     QThread workerThread;
@@ -65,6 +66,8 @@ private:
 
     int spanDays = 0;
     int spanCounts = 0;
+
+    std::atomic<uint64_t> seekGeneration{0};
 
     std::shared_ptr<StreamDecoder> decoder;
 

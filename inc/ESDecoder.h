@@ -37,8 +37,6 @@ private:
 
     // 查找NAL单元的起始码
     size_t findNALStartCode(const std::vector<uint8_t>& buffer, size_t startPos, size_t bufferEnd);
-
-
 };
 
 

@@ -39,6 +39,8 @@ bool SVACDecoder::inputFrame(const Frame& frame) {
 			outFrame.size = outSize;
             outFrame.keyFrame = frame.keyFrame;
             outFrame.frameNum = frame.frameNum;
+            outFrame.timestamp = frame.timestamp;
+            outFrame.offset = frame.offset;
 			_cb(outFrame);
 		}
 		

@@ -23,8 +23,18 @@ void ESDecoder::parse() {
 
     std::vector<uint8_t> buffer(_bufferSize);
     size_t fileSize = getFileSize(file);
+    _fileSize = fileSize;
 
     while (file.tellg() < fileSize &&  !_bStop) {
+        size_t seekOffset = 0;
+        if (consumeSeekRequest(seekOffset)) {
+            file.clear();
+            file.seekg(static_cast<std::streamoff>(seekOffset));
+            if (!file) {
+                break;
+            }
+        }
+
         if (_bPause) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
@@ -40,6 +50,10 @@ void ESDecoder::parse() {
         // 处理当前读取的块
         size_t lastPos;
         parseBlock(buffer, bytesRead, lastPos, currentFilePos);
+
+        if (_seekReadBudget.load() > 0) {
+            _seekReadBudget--;
+        }
 
         // 更新起始位置
         file.seekg(lastPos - _bufferSize, std::ios::cur);
@@ -79,8 +93,9 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
             else {
 
                 Frame frame;
+                frame.offset = curFilePos + bufferPos - 5;
                 if (bufferSPS != 0) {
-                    //如果是SPS帧，那么分割是需要从bufferSPS位置开始                 
+                    //如果是SPS帧，那么分割是需要从bufferSPS位置开始
                     bufferPos = bufferSPS;
 
                     //目前只记录关键帧的位置，
@@ -90,8 +105,12 @@ void ESDecoder::parseBlock(const std::vector<uint8_t>& buffer,
                         frame.frameNum = _frameNumMap.at(frame.offset);
                         std::cout << " es frameNum: " << frame.frameNum << std::endl;
                     } catch (const std::out_of_range& e) {
-                        std::cout << "Key not found" << std::endl;
+                        if (!_frameNumMap.empty()) {
+                            frame.frameNum = resolveKeyFrameIndex(frame.offset);
+                        }
                     }
+                } else if (!_frameNumMap.empty()) {
+                    frame.frameNum = resolveKeyFrameIndex(frame.offset);
                 }
 
                 frame.data = std::vector<uint8_t>(buffer.begin() + bufferPos - 5, buffer.begin() + endPos - 4);
@@ -163,11 +182,7 @@ size_t ESDecoder::findNALStartCode(const std::vector<uint8_t>& buffer, size_t st
 
 
 void ESDecoder::setPosition(int pos) {
-    if (_biFrameNumMap.size() > 10 && (pos>=0 && pos <= 100)) {
-        int frameNum = _biFrameNumMap.size() * pos / 100;
-        size_t offset = _biFrameNumMap.at(frameNum);
-
-    }
+    requestSeek(pos);
 }
 
 

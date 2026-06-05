@@ -35,6 +35,8 @@ void DecryptionChannel::doWork(Frame& input, Frame& output) const {
 	output.size = out->imgsz;
 	output.keyFrame = (out->type == 'I') ? true : false;
     output.frameNum = input.frameNum;
+    output.timestamp = input.timestamp;
+    output.offset = input.offset;
 	TRI_SUT_Free(&out);
 	return;
 }

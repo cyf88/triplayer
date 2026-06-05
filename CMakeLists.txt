@@ -40,6 +40,7 @@ set(PROJECT_SOURCES
     src/ESDecoder.cpp
     src/PSDecoder.cpp
     src/PSDecoder2.cpp
+    src/StreamDecoder.cpp
     src/easylogging++.cc
     src/SDKManager.cpp
     src/tri_svac.cpp
@@ -69,9 +70,10 @@ set(PROJECT_HEADERS
 )
 
 # 添加可执行文件
-add_executable(triplayer #WIN32
+add_executable(triplayer WIN32
     ${PROJECT_SOURCES}
     ${PROJECT_HEADERS}
+    triplayer.rc
 )
 
 # 链接 Qt6 库
